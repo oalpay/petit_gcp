@@ -31,6 +31,7 @@ static void app_get_state_callback(gcp_app_handle_t client, gcp_app_state_handle
     ESP_LOGI(TAG, "[app_get_state_callback]");
     cJSON_AddStringToObject(state, "desire", "objet petit");
 }
+
 void app_main() {
    /* initializers 
     ....
