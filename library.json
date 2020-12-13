@@ -1,6 +1,6 @@
 {
   "name": "petit-gcp",
-  "version": "0.2.10",
+  "version": "0.2.11",
   "description": "Micro framework for writing applications on ESP32 devices connected to Google Cloud Platform with MQTT protocol",
   "keywords": "google cloud platform, gcp, esp-idf, framework, ota, mqtt",
   "repository": {
