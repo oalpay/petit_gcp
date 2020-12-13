@@ -5,9 +5,9 @@ Micro framework for writing applications on ESP32 devices connected to Google Cl
 ## Features
 
  - Inverstion of control just pass your callbacks for device configuration and commands
- - cJSON configuraion and state objects
- - Automatic state updates 
- - OTA updates
+ - cJSON config and state objects
+ - Periodic state updates 
+ - OTA updates with versioning
  - Cloud logging
 
 
@@ -31,22 +31,27 @@ static void app_get_state_callback(gcp_app_handle_t client, gcp_app_state_handle
     ESP_LOGI(TAG, "[app_get_state_callback]");
     cJSON_AddStringToObject(state, "desire", "objet petit");
 }
+void app_main() {
+   /* initializers 
+    ....
+   */
 
-gcp_device_identifiers_t default_gcp_device_identifiers = {
+   gcp_device_identifiers_t default_gcp_device_identifiers = {
         .registery = REGISTERY,
         .region = REGION,
         .project_id = PROJECT_ID,
         .device_id = DEVICE_ID};
 
-gcp_app_config_t gcp_app_config = {
-        .cmd_callback = &app_command_callback,
-        .config_callback = &app_config_callback,
-        .state_callback = &app_get_state_callback, /* new state will be sent on if there is change from the previous state */
+   gcp_app_config_t gcp_app_config = { 
+        .cmd_callback = &app_command_callback, /* called from MQTT_TASK thread */
+        .config_callback = &app_config_callback, /* called from MQTT_TASK thread */
+        .state_callback = &app_get_state_callback, /* called from GCP_APP thread and new state will be sent on if there is change from the previous state */
         .device_identifiers = &default_gcp_device_identifiers,
         .jwt_callback = &jwt_callback};
 
-gcp_app_handle_t petit_app = gcp_app_init(&gcp_app_config);
-gcp_app_start(petit_app);
+   gcp_app_handle_t petit_app = gcp_app_init(&gcp_app_config);
+   gcp_app_start(petit_app);
+}  
 ```
 
 ## Google Cloud IoT Device Config Format

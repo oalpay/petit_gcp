@@ -175,7 +175,6 @@ void app_main()
     gcp_app_handle_t gcp_app_handle = gcp_app_init(&gcp_app_config);
     gcp_app_start(gcp_app_handle);
     */
-
     RUN_TEST(test_gcp_app_init);
     RUN_TEST(test_gcp_app);
     RUN_TEST(test_device_data);
