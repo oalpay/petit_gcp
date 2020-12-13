@@ -336,8 +336,9 @@ esp_err_t gcp_app_start(gcp_app_handle_t client)
 
 esp_err_t gcp_app_send_telemetry(gcp_app_handle_t client, const char *topic, const char *msg)
 {
-    return ESP_OK;
+    return gcp_send_telemetry(client->gcp_client, topic, msg);
 }
+
 esp_err_t gcp_app_logf(gcp_app_handle_t client, char *format, ...)
 {
     va_list argptr;
