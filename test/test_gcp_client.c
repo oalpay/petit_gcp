@@ -130,6 +130,7 @@ void test_gcp_app()
     TEST_ASSERT_EQUAL(GCP_APP_CONNECTED, evt_bit & GCP_APP_CONNECTED);
     TEST_ASSERT_EQUAL(GCP_CONFIG_RECEIVED, evt_bit & GCP_CONFIG_RECEIVED);
 
+    vTaskDelay(60000 / portTICK_PERIOD_MS);
     ESP_LOGI(TAG, "[test_gcp_app] esp_wifi_stop");
     esp_wifi_stop();
     vTaskDelay(2000 / portTICK_PERIOD_MS);

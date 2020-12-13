@@ -39,7 +39,7 @@ static esp_err_t validate_image_header(esp_app_desc_t *new_app_info)
 
 void gcp_ota_update_firmware(char *firmware_url, const char *cert_pem)
 {
-    ESP_LOGI(TAG, "[ota_update_firmware] target url: %s", firmware_url);
+    ESP_LOGI(TAG, "[ota_update_firmware] pem:%p, target url: %s",cert_pem, firmware_url);
     esp_err_t ota_finish_err = ESP_OK;
     esp_http_client_config_t config = {
         .url = firmware_url,
