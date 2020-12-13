@@ -24,6 +24,7 @@ static void app_config_callback(gcp_app_handle_t client, gcp_app_config_handle_t
 static void app_command_callback(gcp_app_handle_t client, char *topic, char *command, void *user_context)
 {
     ESP_LOGI(TAG, "[app_command_callback] topic:%s, cmd:%s", topic, command);
+    gcp_app_send_telemetry(client, "topic_love", "1");
 }
 
 /* return your applications state, this callback will be called periodically and state will be sent to gcp if only there is a change from the previous call */
