@@ -200,10 +200,10 @@ static cJSON *get_app_device_state(gcp_app_handle_t app_client)
     cJSON_AddItemToObject(json_state, JSON_KEY_DEVICE_STATE, json_device_state);
 
     /* app state */
-    cJSON *app_state = NULL;
+    cJSON *app_state = cJSON_CreateObject();
     if (app_client->app_config->state_callback != NULL)
     {
-        app_state = app_client->app_config->state_callback(app_client, app_client->app_config->user_context);
+        app_client->app_config->state_callback(app_client, app_state, app_client->app_config->user_context);
     }
     cJSON_AddItemToObject(json_state, JSON_KEY_APP_STATE, app_state);
     return json_state;

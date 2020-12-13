@@ -19,7 +19,7 @@ extern "C"
 
     typedef void (*gcp_app_config_callback_t)(gcp_app_handle_t client, gcp_app_config_handle_t config, void *user_context);
     typedef void (*gcp_app_command_callback_t)(gcp_app_handle_t client, char *topic, char *cmd, void *user_context);
-    typedef gcp_app_state_handle_t (*gcp_app_state_callback_t)(gcp_app_handle_t client, void *user_context);
+    typedef void (*gcp_app_state_callback_t)(gcp_app_handle_t client,gcp_app_state_handle_t state, void *user_context);
     typedef void (*gcp_app_connected_callback_t)(gcp_app_handle_t client, void *user_context);
     typedef void (*gcp_app_disconnected_callback_t)(gcp_app_handle_t client, void *user_context);
 

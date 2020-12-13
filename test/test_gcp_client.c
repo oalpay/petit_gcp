@@ -18,8 +18,6 @@
 
 #define TEST_USER_CONTEXT "TEST"
 
-#define FIRMWARE_URL "https://storage.googleapis.com/theframe_firmware/firmware_%s.bin"
-
 extern const uint8_t gcp_jwt_private_pem_key_start[] asm("_binary_rsa_private_pem_start");
 extern const uint8_t gcp_jwt_private_pem_key_end[] asm("_binary_rsa_private_pem_end");
 
@@ -66,10 +64,10 @@ static void app_command_callback(gcp_app_handle_t client, char *topic, char *com
     ESP_LOGI(TAG, "[app_command_callback]");
 }
 
-gcp_app_state_handle_t app_get_state_callback(gcp_app_handle_t client, void *user_context)
+static void app_get_state_callback(gcp_app_handle_t client, gcp_app_state_handle_t state, void *user_context)
 {
     ESP_LOGI(TAG, "[app_get_state_callback]");
-    return NULL;
+    cJSON_AddStringToObject(state, "desire", "objet petit");
 }
 
 wifi_credentials_t default_wifi_credentials = {
@@ -130,7 +128,6 @@ void test_gcp_app()
     TEST_ASSERT_EQUAL(GCP_APP_CONNECTED, evt_bit & GCP_APP_CONNECTED);
     TEST_ASSERT_EQUAL(GCP_CONFIG_RECEIVED, evt_bit & GCP_CONFIG_RECEIVED);
 
-    vTaskDelay(60000 / portTICK_PERIOD_MS);
     ESP_LOGI(TAG, "[test_gcp_app] esp_wifi_stop");
     esp_wifi_stop();
     vTaskDelay(2000 / portTICK_PERIOD_MS);
