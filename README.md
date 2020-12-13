@@ -34,7 +34,7 @@ static void app_get_state_callback(gcp_app_handle_t client, gcp_app_state_handle
     cJSON_AddNumberToObject(state, "GPIO_18", gpio_get_level(18));
 }
 
-/* return your heap allocated jwt token it will be freed by the framework*/
+/* return your heap allocated jwt token it will be freed by the framework */
 static char *jwt_callback(const char *project_id)
 {
     ESP_LOGI(TAG, "[jwt_callback]");
@@ -87,7 +87,7 @@ Example function **app_get_state_callback** above will generate and send this st
 ```json
 {
 	"device_state":	{
-		"firmware":	"bb61297-dirty",
+		"firmware":	"bb61297-dirty", 
 		"state_period_ms":	5000,
 		"reset_reason":	1
 	},
@@ -97,7 +97,7 @@ Example function **app_get_state_callback** above will generate and send this st
 	}
 }
 ```
-## OTA
+## Cloud OTA Updates
 ```json
 {
    "app_config":{ 
@@ -113,7 +113,7 @@ Example function **app_get_state_callback** above will generate and send this st
 }
 ```
 
-### OTA params
+### Cloud OTA params
 
 - **version**:  your applications version will be read from [esp_app_desc_t](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/system.html#app-version) and if it is different from the configuration then the firmware pointed at the url will be burned to your device
 - **url**: firmware url (make sure pass the server certificates to gcp_app_config_t.ota_server_cert_pem)
