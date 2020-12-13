@@ -4,7 +4,7 @@ Micro framework for writing applications on ESP32 devices connected to Google Cl
 
 ## Features
 
- - Inverstion of control just pass your callbacks for device configuration and commands
+ - Inverstion of control, just pass your callbacks for device configuration, state and commands
  - cJSON config and state objects
  - Periodic state updates 
  - OTA updates with versioning
@@ -25,7 +25,7 @@ static void app_command_callback(gcp_app_handle_t client, char *topic, char *com
 {
     ESP_LOGI(TAG, "[app_command_callback] topic:%s, cmd:%s", topic, command);
 }
-
+/* return your applications state, this callback will be called periodically and state will be sent to gcp if only there is a change from the previous call */
 static void app_get_state_callback(gcp_app_handle_t client, gcp_app_state_handle_t state, void *user_context)
 {
     ESP_LOGI(TAG, "[app_get_state_callback]");
@@ -72,6 +72,21 @@ void app_main() {
 - **device_config**: this object is reserved for petit_gcp framework   
   - **state_period_ms**: how often state updates will be checked
 
+## Google Cloud IoT Device State 
+Example function **app_get_state_callback** above will generate and send this state object to GCP
+
+```json
+{
+	"device_state":	{
+		"firmware":	"bb61297-dirty",
+		"state_period_ms":	5000,
+		"reset_reason":	1
+	},
+	"app_state":	{
+		"desire":	"objet petit"
+	}
+}
+```
 ## OTA
 ```json
 {
@@ -95,7 +110,7 @@ void app_main() {
   
 ## Cloud Logging
 
-Logs will be sent as telemetry messages, you can change the default logging topic by passing a relative apth in **gcp_app_config_t.topic_path_log** e.g. **topic_path_log="my_log_path/is_better"**
+Logs will be sent as telemetry messages, you can change the default logging topic by passing a relative path in **gcp_app_config_t.topic_path_log** e.g. **topic_path_log="my_log_path/is_better"**
 ```c
 static void app_command_callback(gcp_app_handle_t client, char *topic, char *command, void *user_context)
 {
