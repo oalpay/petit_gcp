@@ -35,6 +35,7 @@ extern "C"
         char *topic_path_log;
         char *topic_path_pulse;
         void *user_context;
+        const char * ota_server_cert_pem; /* esp_https_ota_begin does not use use_global_ca_store */
     } gcp_app_config_t;
 
     gcp_app_handle_t gcp_app_init(gcp_app_config_t *app_config);

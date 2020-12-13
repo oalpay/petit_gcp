@@ -96,7 +96,8 @@ gcp_app_config_t gcp_app_config = {
     .jwt_callback = &jwt_callback,
     .topic_path_log = TOPIC_LOG,
     .topic_path_pulse = TOPIC_PULSE,
-    .user_context = TEST_USER_CONTEXT};
+    .user_context = TEST_USER_CONTEXT,
+    .ota_server_cert_pem = (const char *) iot_google_pem_key_start};
 
 void test_gcp_app_init()
 {
@@ -107,6 +108,7 @@ void test_gcp_app_init()
     TEST_ASSERT_EQUAL(&app_connected_callback, gcp_app_handle->app_config->connected_callback);
     TEST_ASSERT_EQUAL(&app_disconnected_callback, gcp_app_handle->app_config->disconnected_callback);
     TEST_ASSERT_EQUAL(&jwt_callback, gcp_app_handle->app_config->jwt_callback);
+    TEST_ASSERT_EQUAL(iot_google_pem_key_start, gcp_app_handle->app_config->ota_server_cert_pem);
     TEST_ASSERT_EQUAL(TEST_USER_CONTEXT, gcp_app_handle->app_config->user_context);
     TEST_ASSERT_EQUAL_STRING(TOPIC_LOG, gcp_app_handle->app_config->topic_path_log);
     TEST_ASSERT_EQUAL_STRING(TOPIC_PULSE, gcp_app_handle->app_config->topic_path_pulse);

@@ -146,7 +146,7 @@ static void gcp_app_device_config_received(gcp_app_handle_t app_handle, cJSON *d
             if (strcmp(device_firmware_version, firmware_version->valuestring) != 0)
             {
                 ESP_LOGI(TAG, "[gcp_app_device_config_received] current version:%s, new version:%s", device_firmware_version, firmware_version->valuestring);
-                gcp_ota_update_firmware(firmware_url->valuestring);
+                gcp_ota_update_firmware(firmware_url->valuestring, app_handle->app_config->ota_server_cert_pem);
             }
         }
     }
@@ -290,6 +290,7 @@ static gcp_app_config_t *deep_copy_config(gcp_app_config_t *app_config)
     config_copy->device_identifiers = calloc(1, sizeof(gcp_device_identifiers_t));
     config_copy->topic_path_log = app_config->topic_path_log;
     config_copy->topic_path_pulse = app_config->topic_path_pulse;
+    config_copy->ota_server_cert_pem = app_config->ota_server_cert_pem;
     memcpy(config_copy->device_identifiers, app_config->device_identifiers, sizeof(gcp_device_identifiers_t));
     return config_copy;
 }

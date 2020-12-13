@@ -1,6 +1,6 @@
 {
   "name": "petit-gcp",
-  "version": "0.2.1",
+  "version": "0.2.3",
   "description": "Micro framework for google cloud platform with built in OTA feature",
   "keywords": "google cloud platform, gcp, esp-idf, framework, ota",
   "repository": {
