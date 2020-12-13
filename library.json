@@ -1,0 +1,16 @@
+{
+    "name": "gcp-app",
+    "version": "0.2.0",
+    "description": "Micro framework for google cloud platform",
+    "keywords": "google cloud platform, gcp, esp-idf, framework",
+    "authors":
+    [
+      {
+        "name": "Osman Alpay",
+        "email": "osman.alpay@gmail.com"
+      }
+    ],
+    "license": "MIT",
+    "frameworks": "espidf",
+    "platforms": "*"
+  }
