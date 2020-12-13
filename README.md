@@ -25,11 +25,20 @@ static void app_command_callback(gcp_app_handle_t client, char *topic, char *com
 {
     ESP_LOGI(TAG, "[app_command_callback] topic:%s, cmd:%s", topic, command);
 }
+
 /* return your applications state, this callback will be called periodically and state will be sent to gcp if only there is a change from the previous call */
 static void app_get_state_callback(gcp_app_handle_t client, gcp_app_state_handle_t state, void *user_context)
 {
     ESP_LOGI(TAG, "[app_get_state_callback]");
     cJSON_AddStringToObject(state, "desire", "objet petit");
+    cJSON_AddNumberToObject(state, "GPIO_18", gpio_get_level(18));
+}
+
+/* return your heap allocated jwt token it will be freed by the framework*/
+static char *jwt_callback(const char *project_id)
+{
+    ESP_LOGI(TAG, "[jwt_callback]");
+    return create_GCP_JWT(project_id, (const char *)gcp_jwt_private_pem_key_start, gcp_jwt_private_pem_key_end - gcp_jwt_private_pem_key_start);
 }
 
 void app_main() {
@@ -44,8 +53,8 @@ void app_main() {
         .device_id = DEVICE_ID};
 
    gcp_app_config_t gcp_app_config = { 
-        .cmd_callback = &app_command_callback, /* called from MQTT_TASK thread */
-        .config_callback = &app_config_callback, /* called from MQTT_TASK thread */
+        .cmd_callback = &app_command_callback, /* Wildcard command topic messages will be delivered to this callback from MQTT_TASK thread */
+        .config_callback = &app_config_callback, /* called from MQTT_TASK thread when config is received from GCP */
         .state_callback = &app_get_state_callback, /* called from GCP_APP thread and new state will be sent on if there is change from the previous state */
         .device_identifiers = &default_gcp_device_identifiers,
         .jwt_callback = &jwt_callback};
@@ -56,7 +65,6 @@ void app_main() {
 ```
 
 ## Google Cloud IoT Device Config Format
-
 ```json
 {
    "app_config":{ 
@@ -67,10 +75,11 @@ void app_main() {
    }
 }
 ```
+
 ### Config objects
 - **app_config**: this object will be passed to your gcp_app_config_t.config_callback
 - **device_config**: this object is reserved for petit_gcp framework   
-  - **state_period_ms**: how often state updates will be checked
+  - **state_period_ms**: how often state updates will be checked and sent if there is a change
 
 ## Google Cloud IoT Device State 
 Example function **app_get_state_callback** above will generate and send this state object to GCP
@@ -83,7 +92,8 @@ Example function **app_get_state_callback** above will generate and send this st
 		"reset_reason":	1
 	},
 	"app_state":	{
-		"desire":	"objet petit"
+      "desire":	"objet petit",
+      "GPIO_18":  1
 	}
 }
 ```
@@ -95,7 +105,7 @@ Example function **app_get_state_callback** above will generate and send this st
    },
   "device_config":{
       "firmware":{
-         "url":"https://storage.googleapis.com/your_elegant_application_binary",
+         "url":"https://your_elegant_application.bin",
          "version":"0_18" 
       },
       "state_period_ms":5000
