@@ -139,7 +139,6 @@ static void gcp_app_device_config_received(gcp_app_handle_t app_handle, cJSON *d
         gcp_ota_get_running_app_version(device_firmware_version);
         if (strcmp(device_firmware_version, config_firmware_version->valuestring) != 0)
         {
-            ESP_LOGI(TAG, "[gcp_device_config_received] ota -> config firmware version: %s, device firmware version: %s", config_firmware_version->valuestring, device_firmware_version);
             gcp_ota_update_firmware(config_firmware_version->valuestring);
         }
     }
