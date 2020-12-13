@@ -18,6 +18,8 @@
 
 #define TEST_USER_CONTEXT "TEST"
 
+#define FIRMWARE_URL "https://storage.googleapis.com/theframe_firmware/firmware_%s.bin"
+
 extern const uint8_t gcp_jwt_private_pem_key_start[] asm("_binary_rsa_private_pem_start");
 extern const uint8_t gcp_jwt_private_pem_key_end[] asm("_binary_rsa_private_pem_end");
 

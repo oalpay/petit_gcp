@@ -1,11 +1,11 @@
 {
-  "name": "gcp-app",
-  "version": "0.2.0",
-  "description": "Micro framework for google cloud platform",
-  "keywords": "google cloud platform, gcp, esp-idf, framework",
+  "name": "petit-gcp",
+  "version": "0.2.1",
+  "description": "Micro framework for google cloud platform with built in OTA feature",
+  "keywords": "google cloud platform, gcp, esp-idf, framework, ota",
   "repository": {
     "type": "git",
-    "url": "https://github.com/username/hello-world.git"
+    "url": "https://github.com/oalpay/petit_gcp.git"
   },
   "authors": [
     {

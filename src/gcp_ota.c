@@ -8,11 +8,6 @@
 
 #define TAG "GCP_OTA"
 
-#define FIRMWARE_URL "https://storage.googleapis.com/theframe_firmware/firmware_%s.bin"
-
-extern const uint8_t iot_google_pem_key_start[] asm("_binary_google_roots_pem_start");
-extern const uint8_t iot_google_pem_key_end[] asm("_binary_google_roots_pem_end");
-
 void gcp_ota_get_running_app_version(char *version)
 {
     const esp_partition_t *partition = esp_ota_get_running_partition();
@@ -42,17 +37,14 @@ static esp_err_t validate_image_header(esp_app_desc_t *new_app_info)
     return ESP_OK;
 }
 
-void gcp_ota_update_firmware(char *firmware_version)
+void gcp_ota_update_firmware(char *firmware_url)
 {
-    ESP_LOGI(TAG, "[ota_update_firmware] target version: %s", firmware_version);
-    char firmware_url[150];
-    sprintf(firmware_url, FIRMWARE_URL, firmware_version);
-    ESP_LOGI(TAG, "[ota_update_firmware] firmware url: %s", firmware_url);
+    ESP_LOGI(TAG, "[ota_update_firmware] target url: %s", firmware_url);
     esp_err_t ota_finish_err = ESP_OK;
     esp_http_client_config_t config = {
         .url = firmware_url,
-        .cert_pem = (char *)iot_google_pem_key_start,
         .timeout_ms = 2000,
+        .skip_cert_common_name_check = true,
         .use_global_ca_store = true};
 
     esp_https_ota_config_t ota_config = {

@@ -17,7 +17,9 @@
 
 #define JSON_KEY_DEVICE_CONFIG "device_config"
 #define JSON_KEY_DEVICE_CONFIG_STATE_PERIOD "state_period_ms"
-#define JSON_KEY_DEVICE_FIRMWARE_VERSION "firmware_version"
+#define JSON_KEY_DEVICE_FIRMWARE "firmware"
+#define JSON_KEY_DEVICE_FIRMWARE_VERSION "version"
+#define JSON_KEY_DEVICE_FIRMWARE_URL "url"
 #define JSON_KEY_APP_CONFIG "app_config"
 #define JSON_KEY_DEVICE_STATE "device_state"
 #define JSON_KEY_APP_STATE "app_state"
@@ -132,14 +134,20 @@ static void gcp_app_device_config_received(gcp_app_handle_t app_handle, cJSON *d
     {
         set_state_update_period(app_handle, state_period_ms->valueint);
     }
-    const cJSON *config_firmware_version = cJSON_GetObjectItem(device_config, JSON_KEY_DEVICE_FIRMWARE_VERSION);
-    if (cJSON_IsString(config_firmware_version))
+    const cJSON *firmware = cJSON_GetObjectItem(device_config, JSON_KEY_DEVICE_FIRMWARE);
+    if (cJSON_IsObject(firmware))
     {
-        char device_firmware_version[32];
-        gcp_ota_get_running_app_version(device_firmware_version);
-        if (strcmp(device_firmware_version, config_firmware_version->valuestring) != 0)
+        const cJSON *firmware_version = cJSON_GetObjectItem(firmware, JSON_KEY_DEVICE_FIRMWARE_VERSION);
+        const cJSON *firmware_url = cJSON_GetObjectItem(firmware, JSON_KEY_DEVICE_FIRMWARE_URL);
+        if (cJSON_IsString(firmware_version) && cJSON_IsString(firmware_url))
         {
-            gcp_ota_update_firmware(config_firmware_version->valuestring);
+            char device_firmware_version[32];
+            gcp_ota_get_running_app_version(device_firmware_version);
+            if (strcmp(device_firmware_version, firmware_version->valuestring) != 0)
+            {
+                ESP_LOGI(TAG, "[gcp_app_device_config_received] current version:%s, new version:%s", device_firmware_version, firmware_version->valuestring);
+                gcp_ota_update_firmware(firmware_url->valuestring);
+            }
         }
     }
 }
@@ -219,11 +227,13 @@ static void gcp_app_send_state(gcp_app_handle_t app_client)
     cJSON_Delete(last_state);
     last_state = new_state;
 }
+
 static void gcp_send_device_pulse(gcp_app_handle_t app_client)
 {
     char *pulse_path_log = app_client->app_config->topic_path_pulse == NULL ? TOPIC_DEFAULT_LOG : app_client->app_config->topic_path_pulse;
     gcp_send_telemetry(app_client->gcp_client, pulse_path_log, "pulse");
 }
+
 static void gcp_app_task(void *pvParameter)
 {
     ESP_LOGI(TAG, "[gcp_app_task] started");
