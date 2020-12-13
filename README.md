@@ -1,6 +1,6 @@
 # petit_gco
 
-Micro framework for writing applications on ESP32 devices connected to Google Cloud Platform.
+Micro framework for writing applications on ESP32 devices connected to Google Cloud Platform with MQTT protocol.
 
 ## Features
 
@@ -85,8 +85,8 @@ gcp_app_start(petit_app);
 ### OTA params
 
 - **version**:  your applications version will be read from [esp_app_desc_t](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/system.html#app-version) and if it is different from the configuration then the firmware pointed at the url will be burned to your device
-- **url**: firmware url
-- 
+- **url**: firmware url (make sure pass the server certificates to gcp_app_config_t.ota_server_cert_pem)
+  
 ## Cloud Logging
 
 Logs will be sent as telemetry messages, you can change the default logging topic by passing a relative apth in **gcp_app_config_t.topic_path_log** e.g. **topic_path_log="my_log_path/is_better"**

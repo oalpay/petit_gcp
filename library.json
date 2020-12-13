@@ -1,8 +1,8 @@
 {
   "name": "petit-gcp",
-  "version": "0.2.9",
-  "description": "Micro framework for google cloud platform with built in OTA feature",
-  "keywords": "google cloud platform, gcp, esp-idf, framework, ota",
+  "version": "0.2.10",
+  "description": "Micro framework for writing applications on ESP32 devices connected to Google Cloud Platform with MQTT protocol",
+  "keywords": "google cloud platform, gcp, esp-idf, framework, ota, mqtt",
   "repository": {
     "type": "git",
     "url": "https://github.com/oalpay/petit_gcp.git"
