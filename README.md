@@ -86,15 +86,15 @@ Example function **app_get_state_callback** above will generate and send this st
 
 ```json
 {
-	"device_state":	{
-		"firmware":	"bb61297-dirty", 
-		"state_period_ms":	5000,
-		"reset_reason":	1
-	},
-	"app_state":	{
-      "desire":	"objet petit",
-      "GPIO_18":  1
-	}
+   "device_state":{
+      "firmware":"bb61297-dirty",
+      "state_period_ms":5000,
+      "reset_reason":1
+   },
+   "app_state":{
+      "desire":"objet petit",
+      "GPIO_18":1
+   }
 }
 ```
 ## Cloud OTA Updates
