@@ -1,4 +1,4 @@
-# petit_gco
+# petit_gcp
 
 Micro framework for writing applications on ESP32 devices connected to Google Cloud Platform with MQTT protocol.
 
