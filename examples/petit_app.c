@@ -26,6 +26,7 @@ static void app_connected_callback(gcp_app_handle_t client, void *user_context)
 {
     ESP_LOGI(TAG, "[app_connected_callback]");
     gcp_app_log(client, "tesdt");
+    gcp_app_send_telemetry(client, "topic_love", "1");
 }
 
 static void app_disconnected_callback(gcp_app_handle_t client, void *user_context)
