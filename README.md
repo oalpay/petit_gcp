@@ -10,6 +10,14 @@ Micro framework for writing applications on ESP32 devices connected to Google Cl
  - OTA updates with versioning
  - Cloud logging
 
+## Installing
+
+### Using Platform IO
+```bash
+pio lib install "oalpay/petit-gcp"
+```
+### Other
+ Copy *include/\*.h* and *src/\*.c* files to your project. 
 
 ## Getting Started
 ```c
