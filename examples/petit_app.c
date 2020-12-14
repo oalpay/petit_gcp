@@ -6,6 +6,14 @@
 #include "nvs_flash.h"
 #include "wifi_helper.h"
 #include "../test/test_data.h" /* replace with your own definitions */
+/*
+* #define WIFI_SSID "..."
+* #define WIFI_PASSPHARSE "..."
+* #define DEVICE_ID "..."
+* #define REGISTERY "..."
+* #define REGION "..."
+* #define PROJECT_ID "..."
+*/
 
 #define TAG "PETIT_APP"
 

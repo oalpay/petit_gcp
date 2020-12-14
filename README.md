@@ -19,6 +19,7 @@ static void app_config_callback(gcp_app_handle_t client, gcp_app_config_handle_t
     char *pretty_config = cJSON_Print(config);
     ESP_LOGI(TAG, "[app_config_callback] app_config:%s \n", pretty_config);
     free(pretty_config);
+    gcp_app_logf(client, "love is %s", command);
 }
 
 static void app_command_callback(gcp_app_handle_t client, char *topic, char *command, void *user_context)
@@ -27,7 +28,7 @@ static void app_command_callback(gcp_app_handle_t client, char *topic, char *com
     gcp_app_send_telemetry(client, "topic_love", "1");
 }
 
-/* return your applications state, this callback will be called periodically and state will be sent to gcp if only there is a change from the previous call */
+/* add your applications state and forget about it. This callback will be called periodically with an empty state object. If there is a change from the previos call your new state will be sent to GCP IoT state topic */
 static void app_get_state_callback(gcp_app_handle_t client, gcp_app_state_handle_t state, void *user_context)
 {
     ESP_LOGI(TAG, "[app_get_state_callback]");
@@ -54,7 +55,7 @@ void app_main() {
         .device_id = DEVICE_ID};
 
    gcp_app_config_t gcp_app_config = { 
-        .cmd_callback = &app_command_callback, /* Wildcard command topic messages will be delivered to this callback from MQTT_TASK thread */
+        .cmd_callback = &app_command_callback, /* wildcard command topic messages will be delivered to this callback from MQTT_TASK thread */
         .config_callback = &app_config_callback, /* called from MQTT_TASK thread when config is received from GCP */
         .state_callback = &app_get_state_callback, /* called from GCP_APP thread and new state will be sent on if there is change from the previous state */
         .device_identifiers = &default_gcp_device_identifiers,
@@ -87,14 +88,14 @@ Example function **app_get_state_callback** above will generate and send this st
 
 ```json
 {
-   "device_state":{
-      "firmware":"bb61297-dirty",
-      "state_period_ms":5000,
-      "reset_reason":1
-   },
    "app_state":{
       "desire":"objet petit",
       "GPIO_18":1
+   },
+   "device_state":{
+      "firmware":"0_18",
+      "state_period_ms":5000,
+      "reset_reason":1
    }
 }
 ```
