@@ -41,6 +41,10 @@ void timer_callback(TimerHandle_t xTimer)
     {
         xEventGroupSetBits(app_handle->app_event_group, GCP_EVENT_DEVICE_PULSE_BIT);
     }
+    else
+    {
+        ESP_LOGE(TAG, "[timer_callback] unrecognized timer");
+    }
 }
 static void delete_timers(gcp_app_handle_t app_handle)
 {
@@ -79,9 +83,13 @@ static void stop_timers(gcp_app_handle_t app_handle)
 static int start_timer(xTimerHandle timer)
 {
     uint32_t result = xTimerStart(timer, 0);
-    if (result != pdPASS)
+    if (result == pdPASS)
     {
-        ESP_LOGE(TAG, "[start_timer] xTimerStart failed:%s", pcTimerGetTimerName(timer));
+        ESP_LOGD(TAG, "[start_timer] timer %s started", pcTimerGetTimerName(timer));
+    }
+    else
+    {
+        ESP_LOGE(TAG, "[start_timer] timer %s failed to stop", pcTimerGetTimerName(timer));
     }
     return result;
 }
@@ -100,7 +108,7 @@ static void start_timers(gcp_app_handle_t app_handle)
 
 static void timer_config_received(xTimerHandle timer, uint32_t *config_period, uint32_t new_period)
 {
-    ESP_LOGI(TAG, "[change_timer_period] %s timer period changing to:%d", pcTimerGetTimerName(timer), new_period);
+    ESP_LOGD(TAG, "[timer_config_received] %s timer period changing to:%d", pcTimerGetTimerName(timer), new_period);
     if (*config_period == new_period)
     {
         return;
@@ -114,7 +122,7 @@ static void timer_config_received(xTimerHandle timer, uint32_t *config_period, u
     }
     else if (xTimerChangePeriod(timer, new_period / portTICK_PERIOD_MS, 100) == pdFAIL)
     {
-        ESP_LOGE(TAG, "[set_state_update_period] error changing %s timer period", pcTimerGetTimerName(timer));
+        ESP_LOGE(TAG, "[timer_config_received] error changing %s timer period", pcTimerGetTimerName(timer));
         return;
     }
 
@@ -125,7 +133,7 @@ static void timer_config_received(xTimerHandle timer, uint32_t *config_period, u
             return;
         }
     }
-    ESP_LOGI(TAG, "[change_timer_period] %s timer period changed to:%d", pcTimerGetTimerName(timer), new_period);
+    ESP_LOGI(TAG, "[timer_config_received] %s timer period changed to:%d", pcTimerGetTimerName(timer), new_period);
     *config_period = new_period;
 }
 
@@ -139,7 +147,7 @@ static void gcp_app_device_config_received(gcp_app_handle_t app_handle, cJSON *d
     const cJSON *pulse_period_ms = cJSON_GetObjectItem(device_config, JSON_KEY_DEVICE_CONFIG_PULSE_PERIOD);
     if (cJSON_IsNumber(pulse_period_ms))
     {
-        timer_config_received(app_handle->device_pulse_timer, &app_handle->app_config->pulse_update_period_ms, state_period_ms->valueint);
+        timer_config_received(app_handle->device_pulse_timer, &app_handle->app_config->pulse_update_period_ms, pulse_period_ms->valueint);
     }
     const cJSON *firmware = cJSON_GetObjectItem(device_config, JSON_KEY_DEVICE_FIRMWARE);
     if (cJSON_IsObject(firmware))
@@ -320,7 +328,7 @@ gcp_app_handle_t gcp_app_init(gcp_app_config_t *app_config)
         "state_update_timer",
         new_app->app_config->state_update_period_ms / portTICK_PERIOD_MS,
         pdTRUE,
-        (void *)&new_app,
+        new_app,
         timer_callback);
 
     if (new_app->app_config->pulse_update_period_ms == 0)
@@ -331,7 +339,7 @@ gcp_app_handle_t gcp_app_init(gcp_app_config_t *app_config)
         "device_pulse_timer",
         new_app->app_config->pulse_update_period_ms / portTICK_PERIOD_MS,
         pdTRUE,
-        (void *)&new_app,
+        new_app,
         timer_callback);
 
     gcp_client_config_t gcp_client_config = {
@@ -350,7 +358,7 @@ esp_err_t gcp_app_start(gcp_app_handle_t client)
 {
     ESP_LOGD(TAG, "[gcp_app_start] started");
     esp_err_t err = gcp_client_start(client->gcp_client);
-    if (err != ESP_OK)
+    if (err == ESP_OK)
     {
         xTaskCreate(&gcp_app_task, "gcp_app_task", 4096, client, 2, NULL);
     }
