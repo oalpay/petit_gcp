@@ -43,6 +43,7 @@ static void app_connected_callback(gcp_app_handle_t client, void *user_context)
     TEST_ASSERT_EQUAL_STRING(TEST_USER_CONTEXT, user_context);
     xEventGroupSetBits(test_event_group, GCP_APP_CONNECTED);
     gcp_app_log(client, "tesdt");
+    gcp_app_send_telemetry(client, "test", "test");
 }
 
 static void app_disconnected_callback(gcp_app_handle_t client, void *user_context)

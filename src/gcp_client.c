@@ -199,7 +199,7 @@ esp_err_t gcp_send_telemetry(gcp_client_handle_t client, const char *topic, cons
 {
     char *device_topic;
     asprintf(&device_topic, DEVICE_TELEMETRY_TOPIC_FORMAT, client->client_config->device_identifiers->device_id, topic);
-    ESP_LOGD(TAG, "[gcp_send_telemetry] topic:%s, msg:%s", device_topic, msg);
+    ESP_LOGI(TAG, "[gcp_send_telemetry] topic:%s, msg:%s", device_topic, msg);
     esp_err_t result = esp_mqtt_client_publish(client->mqtt_client, device_topic, msg, 0, 1, 1);
     free(device_topic);
     return result > 0 ? ESP_OK : ESP_FAIL;

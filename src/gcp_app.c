@@ -17,6 +17,7 @@
 
 #define JSON_KEY_DEVICE_CONFIG "device_config"
 #define JSON_KEY_DEVICE_CONFIG_STATE_PERIOD "state_period_ms"
+#define JSON_KEY_DEVICE_CONFIG_PULSE_PERIOD "pulse_period_ms"
 #define JSON_KEY_DEVICE_FIRMWARE "firmware"
 #define JSON_KEY_DEVICE_FIRMWARE_VERSION "version"
 #define JSON_KEY_DEVICE_FIRMWARE_URL "url"
@@ -58,73 +59,74 @@ static void delete_timers(gcp_app_handle_t app_handle)
         }
     }
 }
+
+static int stop_timer(xTimerHandle timer)
+{
+    uint32_t result = xTimerStop(timer, 0);
+    if (result != pdPASS)
+    {
+        ESP_LOGE(TAG, "[stop_timer] xTimerStop fail:%s", pcTimerGetTimerName(timer));
+    }
+    return result;
+}
+
 static void stop_timers(gcp_app_handle_t app_handle)
 {
-    if (app_handle->state_update_timer != NULL)
-    {
-        if (xTimerStop(app_handle->state_update_timer, 0) != pdPASS)
-        {
-            ESP_LOGE(TAG, "[stop_timers] state_update_timer xTimerStop fail");
-        }
-    }
-    if (app_handle->device_pulse_timer != NULL)
-    {
-        if (xTimerStop(app_handle->device_pulse_timer, 0) != pdPASS)
-        {
-            ESP_LOGE(TAG, "[stop_timers] device_pulse_timer xTimerStop fail");
-        }
-    }
+    stop_timer(app_handle->state_update_timer);
+    stop_timer(app_handle->device_pulse_timer);
 }
+
+static int start_timer(xTimerHandle timer)
+{
+    uint32_t result = xTimerStart(timer, 0);
+    if (result != pdPASS)
+    {
+        ESP_LOGE(TAG, "[start_timer] xTimerStart failed:%s", pcTimerGetTimerName(timer));
+    }
+    return result;
+}
+
 static void start_timers(gcp_app_handle_t app_handle)
 {
-    if (app_handle->state_update_timer == NULL)
+    if (app_handle->app_config->state_update_period_ms > 0)
     {
-        app_handle->state_update_timer = xTimerCreate(
-            "state_update_timer",
-            app_handle->state_update_period_ms / portTICK_PERIOD_MS,
-            pdTRUE,
-            (void *)app_handle,
-            timer_callback);
+        start_timer(app_handle->state_update_timer);
     }
-    if (xTimerStart(app_handle->state_update_timer, 0) != pdPASS)
+    if (app_handle->app_config->pulse_update_period_ms > 0)
     {
-        ESP_LOGE(TAG, "[init_timers_and_queue] state_update_timer xTimerStart fail");
-    }
-    if (app_handle->device_pulse_timer == NULL)
-    {
-        app_handle->device_pulse_timer = xTimerCreate(
-            "device_pulse_timer",
-            CONFIG_DEVICE_PULSE_PERIOD_MS / portTICK_PERIOD_MS,
-            pdTRUE,
-            (void *)app_handle,
-            timer_callback);
-    }
-    if (xTimerStart(app_handle->device_pulse_timer, 0) != pdPASS)
-    {
-        ESP_LOGE(TAG, "[init_timers_and_queue] device_pulse_timer xTimerStart fail");
+        start_timer(app_handle->device_pulse_timer);
     }
 }
 
-static void set_state_update_period(gcp_app_handle_t app_handle, uint32_t new_period)
+static void timer_config_received(xTimerHandle timer, uint32_t *config_period, uint32_t new_period)
 {
-    if (new_period == app_handle->state_update_period_ms)
+    ESP_LOGI(TAG, "[change_timer_period] %s timer period changing to:%d", pcTimerGetTimerName(timer), new_period);
+    if (*config_period == new_period)
     {
         return;
     }
-    if (new_period <= CONFIG_STATE_PERIOD_MS_MIN)
+    if (new_period == -1)
     {
-        ESP_LOGE(TAG, "Error: [set_state_update_period] config state update period '%d' less than minimum", new_period);
+        if (stop_timer(timer) == pdFAIL)
+        {
+            return;
+        }
+    }
+    else if (xTimerChangePeriod(timer, new_period / portTICK_PERIOD_MS, 100) == pdFAIL)
+    {
+        ESP_LOGE(TAG, "[set_state_update_period] error changing %s timer period", pcTimerGetTimerName(timer));
         return;
     }
-    if (xTimerChangePeriod(app_handle->state_update_timer, new_period / portTICK_PERIOD_MS, 100) == pdPASS)
+
+    if (xTimerIsTimerActive(timer) == pdFALSE)
     {
-        ESP_LOGI(TAG, "[set_state_update_period] state update period changed to:%d", new_period);
-        app_handle->state_update_period_ms = new_period;
+        if (start_timer(timer) == pdFAIL)
+        {
+            return;
+        }
     }
-    else
-    {
-        ESP_LOGE(TAG, "[set_state_update_period] error changing period");
-    }
+    ESP_LOGI(TAG, "[change_timer_period] %s timer period changed to:%d", pcTimerGetTimerName(timer), new_period);
+    *config_period = new_period;
 }
 
 static void gcp_app_device_config_received(gcp_app_handle_t app_handle, cJSON *device_config)
@@ -132,7 +134,12 @@ static void gcp_app_device_config_received(gcp_app_handle_t app_handle, cJSON *d
     const cJSON *state_period_ms = cJSON_GetObjectItem(device_config, JSON_KEY_DEVICE_CONFIG_STATE_PERIOD);
     if (cJSON_IsNumber(state_period_ms))
     {
-        set_state_update_period(app_handle, state_period_ms->valueint);
+        timer_config_received(app_handle->state_update_timer, &app_handle->app_config->state_update_period_ms, state_period_ms->valueint);
+    }
+    const cJSON *pulse_period_ms = cJSON_GetObjectItem(device_config, JSON_KEY_DEVICE_CONFIG_PULSE_PERIOD);
+    if (cJSON_IsNumber(pulse_period_ms))
+    {
+        timer_config_received(app_handle->device_pulse_timer, &app_handle->app_config->pulse_update_period_ms, state_period_ms->valueint);
     }
     const cJSON *firmware = cJSON_GetObjectItem(device_config, JSON_KEY_DEVICE_FIRMWARE);
     if (cJSON_IsObject(firmware))
@@ -194,7 +201,8 @@ static cJSON *get_app_device_state(gcp_app_handle_t app_client)
     char version[32];
     gcp_ota_get_running_app_version(version);
     cJSON_AddStringToObject(json_device_state, JSON_KEY_FIRMWARE, version);
-    cJSON_AddNumberToObject(json_device_state, JSON_KEY_DEVICE_CONFIG_STATE_PERIOD, app_client->state_update_period_ms);
+    cJSON_AddNumberToObject(json_device_state, JSON_KEY_DEVICE_CONFIG_STATE_PERIOD, app_client->app_config->state_update_period_ms);
+    cJSON_AddNumberToObject(json_device_state, JSON_KEY_DEVICE_CONFIG_PULSE_PERIOD, app_client->app_config->pulse_update_period_ms);
     cJSON_AddNumberToObject(json_device_state, JSON_KEY_RESET_REASON, esp_reset_reason());
 
     cJSON_AddItemToObject(json_state, JSON_KEY_DEVICE_STATE, json_device_state);
@@ -215,22 +223,21 @@ static void gcp_app_send_state(gcp_app_handle_t app_client)
     cJSON *new_state = get_app_device_state(app_client);
     if (cJSON_Compare(last_state, new_state, true))
     {
-        // no change
-        cJSON_Delete(new_state);
-        return;
+        goto end;
     }
     char *new_state_s = cJSON_Print(new_state);
-    gcp_send_state(app_client->gcp_client, new_state_s);
     cJSON_Minify(new_state_s);
     ESP_LOGI(TAG, "[gcp_send_state] sending new state:\n%s", new_state_s);
+    gcp_send_state(app_client->gcp_client, new_state_s);
     free(new_state_s);
+end:
     cJSON_Delete(last_state);
     last_state = new_state;
 }
 
 static void gcp_send_device_pulse(gcp_app_handle_t app_client)
 {
-    char *pulse_path_log = app_client->app_config->topic_path_pulse == NULL ? TOPIC_DEFAULT_LOG : app_client->app_config->topic_path_pulse;
+    char *pulse_path_log = app_client->app_config->topic_path_pulse == NULL ? TOPIC_DEFAULT_PULSE : app_client->app_config->topic_path_pulse;
     gcp_send_telemetry(app_client->gcp_client, pulse_path_log, "pulse");
 }
 
@@ -260,6 +267,7 @@ static void gcp_app_task(void *pvParameter)
 
 static void gcp_client_connected_callback(gcp_client_handle_t client, void *user_context)
 {
+    ESP_LOGD(TAG, "[gcp_client_connected_callback]");
     gcp_app_handle_t app_client = (gcp_app_handle_t)user_context;
     start_timers(app_client);
     if (app_client->app_config->connected_callback != NULL)
@@ -280,17 +288,8 @@ static void gcp_client_disconnected_callback(gcp_client_handle_t client, void *u
 static gcp_app_config_t *deep_copy_config(gcp_app_config_t *app_config)
 {
     gcp_app_config_t *config_copy = calloc(1, sizeof(*config_copy));
-    config_copy->state_callback = app_config->state_callback;
-    config_copy->cmd_callback = app_config->cmd_callback;
-    config_copy->config_callback = app_config->config_callback;
-    config_copy->jwt_callback = app_config->jwt_callback;
-    config_copy->connected_callback = app_config->connected_callback;
-    config_copy->disconnected_callback = app_config->disconnected_callback;
-    config_copy->user_context = app_config->user_context;
+    memcpy(config_copy, app_config, sizeof(gcp_app_config_t));
     config_copy->device_identifiers = calloc(1, sizeof(gcp_device_identifiers_t));
-    config_copy->topic_path_log = app_config->topic_path_log;
-    config_copy->topic_path_pulse = app_config->topic_path_pulse;
-    config_copy->ota_server_cert_pem = app_config->ota_server_cert_pem;
     memcpy(config_copy->device_identifiers, app_config->device_identifiers, sizeof(gcp_device_identifiers_t));
     return config_copy;
 }
@@ -312,7 +311,28 @@ gcp_app_handle_t gcp_app_init(gcp_app_config_t *app_config)
     gcp_app_handle_t new_app = calloc(1, sizeof(*new_app));
     new_app->app_config = deep_copy_config(app_config);
     new_app->app_event_group = xEventGroupCreate();
-    new_app->state_update_period_ms = CONFIG_STATE_PERIOD_MS_MIN;
+    /* init timers */
+    if (new_app->app_config->state_update_period_ms == 0)
+    {
+        new_app->app_config->state_update_period_ms = APP_CONFIG_DEFAULT_STATE_PERIOD_MS;
+    }
+    new_app->state_update_timer = xTimerCreate(
+        "state_update_timer",
+        new_app->app_config->state_update_period_ms / portTICK_PERIOD_MS,
+        pdTRUE,
+        (void *)&new_app,
+        timer_callback);
+
+    if (new_app->app_config->pulse_update_period_ms == 0)
+    {
+        new_app->app_config->pulse_update_period_ms = APP_CONFIG_DEFAULT_PULSE_PERIOD_MS;
+    }
+    new_app->device_pulse_timer = xTimerCreate(
+        "device_pulse_timer",
+        new_app->app_config->pulse_update_period_ms / portTICK_PERIOD_MS,
+        pdTRUE,
+        (void *)&new_app,
+        timer_callback);
 
     gcp_client_config_t gcp_client_config = {
         .cmd_callback = &gcp_app_command_callback,
@@ -330,7 +350,10 @@ esp_err_t gcp_app_start(gcp_app_handle_t client)
 {
     ESP_LOGD(TAG, "[gcp_app_start] started");
     esp_err_t err = gcp_client_start(client->gcp_client);
-    xTaskCreate(&gcp_app_task, "gcp_app_task", 4096, client, 2, NULL);
+    if (err != ESP_OK)
+    {
+        xTaskCreate(&gcp_app_task, "gcp_app_task", 4096, client, 2, NULL);
+    }
     return err;
 }
 
