@@ -28,7 +28,7 @@
 #define GCP_EVENT_MQTT_CONNECTED_BIT BIT3
 #define GCP_EVENT_MQTT_DISCONNECT_BIT BIT4
 
-struct gcp_client_client_t
+struct gcp_client_t
 {
     gcp_client_config_t *client_config;
     esp_mqtt_client_handle_t mqtt_client;

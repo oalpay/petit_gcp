@@ -81,7 +81,9 @@ void app_main() {
       "test":"app_config"
    },
    "device_config":{
-      "state_period_ms":5000 
+      "state_period_ms":5000,
+      "pulse_period_ms":60000,
+      "tz": "GMT-3"
    }
 }
 ```
@@ -90,6 +92,8 @@ void app_main() {
 - **app_config**: this object will be passed to your gcp_app_config_t.config_callback
 - **device_config**: this object is reserved for petit_gcp framework   
   - **state_period_ms**: how often state updates will be checked and sent if there is a change
+  - **pulse_period_ms**: how often hearth pulse signals will be sent
+  - **tz**: set timezone of the device 
 
 ## Google Cloud IoT Device State 
 Example function **app_get_state_callback** above will generate and send this state object to GCP

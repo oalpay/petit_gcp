@@ -1,5 +1,5 @@
-#ifndef GCP_APP_CLIENT__H
-#define GCP_APP_CLIENT__H
+#ifndef GCP_APP_INTERNAL__H
+#define GCP_APP_INTERNAL__H
 
 #include "gcp_app.h"
 #include <freertos/FreeRTOS.h>
@@ -18,5 +18,10 @@ struct gcp_app_client_t
     xTimerHandle device_pulse_timer;
     EventGroupHandle_t app_event_group;
 };
+
+void gcp_app_connected_callback(gcp_client_handle_t client, void *user_context);
+void gcp_app_config_callback(gcp_client_handle_t client, gcp_client_config_handle_t config, void *user_context);
+void gcp_app_command_callback(gcp_client_handle_t client, char *topic, char *command, void *user_context);
+void gcp_app_disconnected_callback(gcp_client_handle_t client, void *user_context);
 
 #endif

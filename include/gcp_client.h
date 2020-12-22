@@ -9,8 +9,8 @@ extern "C"
 #include "stdint.h"
 #include "stdbool.h"
 #include "esp_err.h"
-    struct gcp_client_client_t;
-    typedef struct gcp_client_client_t *gcp_client_handle_t;
+    struct gcp_client_t;
+    typedef struct gcp_client_t *gcp_client_handle_t;
 
     typedef char *gcp_client_config_handle_t;
     typedef char *gcp_client_state_handle_t;
