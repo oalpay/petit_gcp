@@ -23,11 +23,13 @@ extern const uint8_t gcp_jwt_private_pem_key_end[] asm("_binary_rsa_private_pem_
 extern const uint8_t iot_google_pem_key_start[] asm("_binary_google_roots_pem_start");
 extern const uint8_t iot_google_pem_key_end[] asm("_binary_google_roots_pem_end");
 
-/* return your heap allocated, jwt token it will be freed by the framework*/
-static char *jwt_callback(const char *project_id)
+/* set your JWT token to buffer*/
+static void jwt_callback(const char *project_id, char *jtw_token_buffer)
 {
     ESP_LOGI(TAG, "[jwt_callback]");
-    return create_GCP_JWT(project_id, (const char *)gcp_jwt_private_pem_key_start, gcp_jwt_private_pem_key_end - gcp_jwt_private_pem_key_start);
+    char *token = create_GCP_JWT(project_id, (const char *)gcp_jwt_private_pem_key_start, gcp_jwt_private_pem_key_end - gcp_jwt_private_pem_key_start);
+    strncpy(jtw_token_buffer, token, JWT_TOKEN_BUFFER_SIZE); //BUFFER SIZE
+    free(token);
 }
 
 static void app_connected_callback(gcp_app_handle_t client, void *user_context)
