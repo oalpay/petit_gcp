@@ -17,7 +17,7 @@ FAKE_VOID_FUNC(app_command_callback, gcp_app_handle_t , char *, char *, void *);
 void app_get_state_callback(gcp_app_handle_t client, gcp_app_state_handle_t state, void *user_context);
 FAKE_VOID_FUNC(app_get_state_callback, gcp_app_handle_t , gcp_app_state_handle_t , void *);
 
-char *app_jwt_callback(const char *project_id);
-FAKE_VALUE_FUNC( char*, app_jwt_callback, const char *);
+void app_jwt_callback(const char *project_id, char *jwt_token_buffer);
+FAKE_VOID_FUNC(app_jwt_callback, const char *, char*);
 
 #endif

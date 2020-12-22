@@ -9,6 +9,9 @@ extern "C"
 #include "stdint.h"
 #include "stdbool.h"
 #include "esp_err.h"
+
+    #define JWT_TOKEN_BUFFER_SIZE 581
+
     struct gcp_client_t;
     typedef struct gcp_client_t *gcp_client_handle_t;
 
@@ -16,7 +19,7 @@ extern "C"
     typedef char *gcp_client_state_handle_t;
 
     /* return a heap allocated string, this method will call free on the returned object */
-    typedef char *(*gcp_jwt_callback_t)(const char *project_id);
+    typedef void (*gcp_jwt_callback_t)(const char *project_id, char *jwt_token_buffer);
     typedef void (*gcp_client_config_callback_t)(gcp_client_handle_t client, gcp_client_config_handle_t config, void *user_context);
     typedef void (*gcp_client_command_callback_t)(gcp_client_handle_t client, char *topic, char *cmd, void *user_context);
     typedef void (*gcp_client_connected_callback_t)(gcp_client_handle_t client, void *user_context);

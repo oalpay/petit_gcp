@@ -44,11 +44,12 @@ static void app_get_state_callback(gcp_app_handle_t client, gcp_app_state_handle
     cJSON_AddNumberToObject(state, "GPIO_18", gpio_get_level(18));
 }
 
-/* return your heap allocated jwt token it will be freed by the framework */
-static char *jwt_callback(const char *project_id)
+/* set your JWT TOKEN */
+static void jwt_callback(const char *project_id, char* jtw_token_buffer)
 {
-    ESP_LOGI(TAG, "[jwt_callback]");
-    return create_GCP_JWT(project_id, (const char *)gcp_jwt_private_pem_key_start, gcp_jwt_private_pem_key_end - gcp_jwt_private_pem_key_start);
+    char *token = create_GCP_JWT(project_id, (const char *)gcp_jwt_private_pem_key_start, gcp_jwt_private_pem_key_end - gcp_jwt_private_pem_key_start);
+    strncpy(jtw_token_buffer,token, JWT_TOKEN_BUFFER_SIZE); //BUFFER SIZE
+    free(token);
 }
 
 void app_main() {

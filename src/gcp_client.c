@@ -32,12 +32,14 @@ struct gcp_client_t
 {
     gcp_client_config_t *client_config;
     esp_mqtt_client_handle_t mqtt_client;
+    char jwt_token_buffer[JWT_TOKEN_BUFFER_SIZE];
+    char *client_id;
     char *topic_config;
     char *topic_cmd;
     char *topic_state;
 };
 
-static esp_err_t mqtt_evet_connected(esp_mqtt_event_handle_t event)
+static esp_err_t mqtt_connected(esp_mqtt_event_handle_t event)
 {
     ESP_LOGD(TAG, "MQTT_EVENT_CONNECTED");
     gcp_client_handle_t gcp_client = event->user_context;
@@ -50,10 +52,11 @@ static esp_err_t mqtt_evet_connected(esp_mqtt_event_handle_t event)
     return ESP_OK;
 }
 
-static esp_err_t mqtt_evet_disconnected(esp_mqtt_event_handle_t event)
+static esp_err_t mqtt_disconnected(esp_mqtt_event_handle_t event)
 {
     ESP_LOGD(TAG, "MQTT_EVENT_DISCONNECTED");
     gcp_client_handle_t gcp_client = event->user_context;
+    strcpy(gcp_client->jwt_token_buffer, "");
     if (gcp_client->client_config->disconnected_callback != NULL)
     {
         gcp_client->client_config->disconnected_callback(gcp_client, gcp_client->client_config->user_context);
@@ -85,19 +88,44 @@ static esp_err_t mqtt_data_received(esp_mqtt_event_handle_t event)
     return ESP_OK;
 }
 
+static esp_err_t gcp_mqtt_event_handler(esp_mqtt_event_handle_t event);
+
+static void create_mqtt_config(esp_mqtt_client_config_t *mqtt_cfg, gcp_client_handle_t gcp_client)
+{
+    mqtt_cfg->uri = MQTT_BRIDGE_URI;
+    mqtt_cfg->event_handle = gcp_mqtt_event_handler;
+    mqtt_cfg->username = "unuser";
+    gcp_client->client_config->jwt_callback(gcp_client->client_config->device_identifiers->project_id, gcp_client->jwt_token_buffer);
+    mqtt_cfg->password = gcp_client->jwt_token_buffer;
+    mqtt_cfg->client_id = gcp_client->client_id;
+    mqtt_cfg->user_context = gcp_client;
+}
+
+static esp_err_t mqtt_before_connect(esp_mqtt_event_handle_t event)
+{
+    gcp_client_handle_t gcp_client = event->user_context;
+    if (strcmp("", gcp_client->jwt_token_buffer) == 0)
+    {
+        esp_mqtt_client_config_t mqtt_cfg = {};
+        create_mqtt_config(&mqtt_cfg, gcp_client);
+        esp_mqtt_set_config(event->client, &mqtt_cfg);
+    }
+    return ESP_OK;
+}
+
 static esp_err_t gcp_mqtt_event_handler(esp_mqtt_event_handle_t event)
 {
     esp_err_t result = ESP_OK;
     switch (event->event_id)
     {
     case MQTT_EVENT_BEFORE_CONNECT:
-        ESP_LOGD(TAG, "MQTT_EVENT_BEFORE_CONNECT");
+        result = mqtt_before_connect(event);
         break;
     case MQTT_EVENT_CONNECTED:
-        result = mqtt_evet_connected(event);
+        result = mqtt_connected(event);
         break;
     case MQTT_EVENT_DISCONNECTED:
-        result = mqtt_evet_disconnected(event);
+        result = mqtt_disconnected(event);
         break;
     case MQTT_EVENT_SUBSCRIBED:
         ESP_LOGD(TAG, "MQTT_EVENT_SUBSCRIBED: topic=%.*s", event->topic_len, event->topic);
@@ -124,22 +152,9 @@ static esp_err_t gcp_mqtt_event_handler(esp_mqtt_event_handle_t event)
 static void gcp_mqtt_connect(gcp_client_handle_t gcp_client)
 {
     esp_mqtt_client_config_t mqtt_cfg = {};
-    mqtt_cfg.uri = MQTT_BRIDGE_URI;
-    mqtt_cfg.event_handle = gcp_mqtt_event_handler;
-    //mqtt_cfg.cert_pem = (const char *)iot_google_pem_key_start;
-    mqtt_cfg.username = "unuser";
-    char *jwt = gcp_client->client_config->jwt_callback(gcp_client->client_config->device_identifiers->project_id);
-    mqtt_cfg.password = jwt;
-    gcp_device_identifiers_t *device_identifiers = gcp_client->client_config->device_identifiers;
-    char client_id[200];
-    sprintf(client_id, MQTT_CLIENT_ID_FORMAT, device_identifiers->project_id, device_identifiers->region, device_identifiers->registery, device_identifiers->device_id);
-    ESP_LOGD(TAG, "[gcp_mqtt_connect] client_id:%s", client_id);
-    mqtt_cfg.client_id = client_id;
-    mqtt_cfg.user_context = gcp_client;
+    create_mqtt_config(&mqtt_cfg, gcp_client);
     gcp_client->mqtt_client = esp_mqtt_client_init(&mqtt_cfg);
     ESP_ERROR_CHECK(esp_mqtt_client_start(gcp_client->mqtt_client));
-    //free
-    free(jwt);
 }
 
 static gcp_client_config_t *deep_copy_config(gcp_client_config_t *client_config)
@@ -166,6 +181,7 @@ static void setup_topic_strings(gcp_client_handle_t client)
 esp_err_t gcp_client_destroy(gcp_client_handle_t client)
 {
     esp_mqtt_client_destroy(client->mqtt_client);
+    free(client->client_id);
     free(client->client_config->device_identifiers);
     free(client->client_config);
     free(client);
@@ -177,6 +193,7 @@ gcp_client_handle_t gcp_client_init(gcp_client_config_t *client_config)
 {
     gcp_client_handle_t new_client = calloc(1, sizeof(*new_client));
     new_client->client_config = deep_copy_config(client_config);
+    asprintf(&new_client->client_id, MQTT_CLIENT_ID_FORMAT, client_config->device_identifiers->project_id, client_config->device_identifiers->region, client_config->device_identifiers->registery, client_config->device_identifiers->device_id);
     setup_topic_strings(new_client);
     return new_client;
 }
