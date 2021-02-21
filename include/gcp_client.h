@@ -27,10 +27,10 @@ extern "C"
 
     typedef struct
     {
-        char registery[20];
-        char region[20];
-        char project_id[20];
-        char device_id[20];
+        char registery[50];
+        char region[50];
+        char project_id[50];
+        char device_id[50];
     } gcp_device_identifiers_t;
 
     typedef struct

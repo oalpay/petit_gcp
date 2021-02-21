@@ -1,5 +1,6 @@
 
 #include "stdio.h"
+#include "string.h"
 #include "gcp_app.h"
 #include "gcp_jwt.h"
 #include "esp_log.h"
