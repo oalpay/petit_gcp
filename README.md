@@ -1,6 +1,6 @@
 # petit_gcp
 
-Micro framework for writing applications on ESP32 devices connected to Google Cloud Platform with MQTT protocol.
+Micro framework for writing applications on ESP32 devices connected to Google Cloud Platform with MQTT protocol. Check out this [guide](https://github.com/oalpay/IoTAppSample) for an end to end esp32 application using this framework.
 
 ## Features
 
